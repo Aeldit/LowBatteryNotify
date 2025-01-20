@@ -7,6 +7,7 @@ use std::time::Duration;
 
 use battery::State;
 
+// TODO: Check if the computer is a laptop, and if so, exit the program
 fn main() -> battery::Result<()> {
     let manager = battery::Manager::new()?;
     let mut battery = match manager.batteries()?.next() {
