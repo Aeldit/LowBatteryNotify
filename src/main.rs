@@ -16,8 +16,12 @@ fn notify(percentage: u8, cmd: &mut Command) {
     .expect("Failed to run notify command");
 }
 
-// TODO: Check if the computer is a laptop, and if so, exit the program
 fn main() -> battery::Result<()> {
+    if !is_laptop::check() {
+        eprintln!("Terminating the program, this computer appears to not be a laptop");
+        return Err(Error::from(ErrorKind::NotFound).into());
+    }
+
     let manager = battery::Manager::new()?;
     let mut battery = match manager.batteries()?.next() {
         Some(Ok(battery)) => battery,

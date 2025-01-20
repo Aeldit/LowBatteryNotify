@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 battery = "0.7.8"
+is-laptop = "0.4.3"
