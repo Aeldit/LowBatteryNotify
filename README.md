@@ -12,7 +12,7 @@ To build the project, use the following commands:
 ```sh
 git clone https://github.com/Aeldit/LowBatteryNotify.git
 cd LowBatteryNotify
-cargo build -r // builds the project in release mode
+cargo build -r # builds the project in release mode
 ```
 
 The file will then be located at `target/release/LowBatteryNotify`
