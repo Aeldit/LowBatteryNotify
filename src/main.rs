@@ -7,6 +7,15 @@ use std::time::Duration;
 
 use battery::State;
 
+fn notify(percentage: u8, cmd: &mut Command) {
+    cmd.arg(format!(
+        "notify-send -a \"LowBatteryNotify\" -u CRITICAL -t 5000 -p \"Battery Low ({}%)\"",
+        percentage
+    ))
+    .output()
+    .expect("Failed to run notify command");
+}
+
 // TODO: Check if the computer is a laptop, and if so, exit the program
 fn main() -> battery::Result<()> {
     let manager = battery::Manager::new()?;
@@ -28,9 +37,7 @@ fn main() -> battery::Result<()> {
     let mut has_notified_5 = false;
 
     let mut cmd = Command::new("sh");
-    cmd.arg("-c").arg(
-        "notify-send -a \"LowBatteryNotify\" -u CRITICAL -t 5000 -p \"Battery Extremely Low (",
-    );
+    cmd.arg("-c");
 
     loop {
         let percentage = (battery.state_of_charge().value * 100.0) as u8;
@@ -41,22 +48,21 @@ fn main() -> battery::Result<()> {
             has_notified_5 = false;
         }
 
+        println!(
+            "is_discharging {} | percentage {}",
+            is_discharging, percentage
+        );
+
         if is_discharging {
             if percentage <= 5 && !has_notified_5 {
                 has_notified_5 = true;
-                cmd.arg(format!("{}%)\"", percentage))
-                    .output()
-                    .expect("Failed to run notify command");
+                notify(percentage, &mut cmd);
             } else if percentage <= 10 && !has_notified_10 {
                 has_notified_10 = true;
-                cmd.arg(format!("{}%)\"", percentage))
-                    .output()
-                    .expect("Failed to run notify command");
+                notify(percentage, &mut cmd);
             } else if percentage <= 20 && !has_notified_20 {
                 has_notified_20 = true;
-                cmd.arg(format!("{}%)\"", percentage))
-                    .output()
-                    .expect("Failed to run notify command");
+                notify(percentage, &mut cmd);
             }
         }
 
