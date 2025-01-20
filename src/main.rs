@@ -52,11 +52,6 @@ fn main() -> battery::Result<()> {
             has_notified_5 = false;
         }
 
-        println!(
-            "is_discharging {} | percentage {}",
-            is_discharging, percentage
-        );
-
         if is_discharging {
             if percentage <= 5 && !has_notified_5 {
                 has_notified_5 = true;
