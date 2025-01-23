@@ -8,12 +8,15 @@ use std::time::Duration;
 use battery::State;
 
 fn notify(percentage: u8, cmd: &mut Command) {
-    cmd.arg(format!(
-        "notify-send -a \"LowBatteryNotify\" -u CRITICAL -t 5000 -p \"Battery Low ({}%)\"",
-        percentage
-    ))
-    .output()
-    .expect("Failed to run notify command");
+    if let Err(e) = cmd
+        .arg(format!(
+            "notify-send -a \"LowBatteryNotify\" -u CRITICAL -t 5000 -p \"Battery Low ({}%)\"",
+            percentage
+        ))
+        .output()
+    {
+        eprintln!("Failed to run the notify-send command ({e:?})");
+    };
 }
 
 fn main() -> battery::Result<()> {
