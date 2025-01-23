@@ -21,7 +21,7 @@ fn notify(percentage: u8, cmd: &mut Command) {
 
 fn main() -> battery::Result<()> {
     if !is_laptop::check() {
-        eprintln!("Terminating the program, this computer appears to not be a laptop");
+        eprintln!("Terminating the program, this computer is not a laptop");
         return Err(Error::from(ErrorKind::NotFound).into());
     }
 
