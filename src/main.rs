@@ -68,7 +68,7 @@ fn main() -> battery::Result<()> {
             }
         }
 
-        sleep(Duration::from_secs(20));
+        sleep(Duration::from_secs(60));
         manager.refresh(&mut battery)?;
     }
 }
