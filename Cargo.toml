@@ -1,8 +1,4 @@
 [package]
 name = "LowBatteryNotify"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
-
-[dependencies]
-battery = "0.7.8"
-is-laptop = "0.4.3"

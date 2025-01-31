@@ -1,74 +1,75 @@
-extern crate battery;
+use std::fs;
 use std::process::Command;
 
-use std::io::{Error, ErrorKind};
 use std::thread::sleep;
 use std::time::Duration;
 
-use battery::State;
+/**
+** \returns 1 if the current computer is a laptop or a notebook, 0 otherwise
+*/
+fn is_laptop() -> bool {
+    match fs::read_to_string("/sys/class/dmi/id/chassis_type") {
+        Ok(contents) => contents.starts_with("9") || contents.starts_with("10"),
+        Err(_) => false,
+    }
+}
 
-fn notify(percentage: u8, cmd: &mut Command) {
-    if let Err(e) = cmd
+fn is_discharging() -> bool {
+    match fs::read_to_string("/sys/class/power_supply/BAT0/status") {
+        Ok(contents) => contents.starts_with("Discharging"),
+        Err(_) => false,
+    }
+}
+
+fn get_percentage() -> Option<u8> {
+    match fs::read_to_string("/sys/class/power_supply/BAT0/capacity") {
+        Ok(contents) => match contents.parse::<u8>() {
+            Ok(percentage) => Some(percentage),
+            Err(_) => None,
+        },
+        Err(_) => None,
+    }
+}
+
+fn notify(percentage: u8) {
+    if Command::new("sh")
+        .arg("-c")
         .arg(format!(
             "notify-send -a \"LowBatteryNotify\" -u CRITICAL -t 5000 -p \"Battery Low ({}%)\"",
             percentage
         ))
         .output()
-    {
-        eprintln!("Failed to run the notify-send command ({e:?})");
-    };
+        .is_err()
+    {};
 }
 
-fn main() -> battery::Result<()> {
-    if !is_laptop::check() {
-        eprintln!("Terminating the program, this computer is not a laptop");
-        return Err(Error::from(ErrorKind::NotFound).into());
+fn main() {
+    if !is_laptop() {
+        return;
     }
 
-    let manager = battery::Manager::new()?;
-    let mut battery = match manager.batteries()?.next() {
-        Some(Ok(battery)) => battery,
-        Some(Err(e)) => {
-            eprintln!("Unable to access battery information");
-            return Err(e);
-        }
-        None => {
-            eprintln!("Unable to find any batteries");
-            return Err(Error::from(ErrorKind::NotFound).into());
-        }
-    };
-
-    let mut is_discharging;
     let mut has_notified_20 = false;
     let mut has_notified_10 = false;
     let mut has_notified_5 = false;
 
-    let mut cmd = Command::new("sh");
-    cmd.arg("-c");
-
     loop {
-        let percentage = (battery.state_of_charge().value * 100.0) as u8;
-        is_discharging = battery.state() == State::Discharging;
-        if !is_discharging {
+        if !is_discharging() {
             has_notified_20 = false;
             has_notified_10 = false;
             has_notified_5 = false;
-        }
-
-        if is_discharging {
+        } else if let Some(percentage) = get_percentage() {
             if percentage <= 5 && !has_notified_5 {
                 has_notified_5 = true;
-                notify(percentage, &mut cmd);
+                notify(percentage);
             } else if percentage <= 10 && !has_notified_10 {
                 has_notified_10 = true;
-                notify(percentage, &mut cmd);
+                notify(percentage);
             } else if percentage <= 20 && !has_notified_20 {
                 has_notified_20 = true;
-                notify(percentage, &mut cmd);
+                notify(percentage);
             }
         }
 
         sleep(Duration::from_secs(60));
-        manager.refresh(&mut battery)?;
     }
 }
