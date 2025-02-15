@@ -4,9 +4,9 @@ use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
-/**
-** \returns 1 if the current computer is a laptop or a notebook, 0 otherwise
-*/
+//
+// \returns 1 if the current computer is a laptop or a notebook, 0 otherwise
+//
 fn is_laptop() -> bool {
     match fs::read_to_string("/sys/class/dmi/id/chassis_type") {
         Ok(contents) => contents.starts_with("9") || contents.starts_with("10"),
@@ -22,25 +22,24 @@ fn is_discharging() -> bool {
 }
 
 fn get_percentage() -> Option<u8> {
-    match fs::read_to_string("/sys/class/power_supply/BAT0/capacity") {
-        Ok(contents) => match contents.parse::<u8>() {
-            Ok(percentage) => Some(percentage),
-            Err(_) => None,
-        },
-        Err(_) => None,
-    }
+    if let Ok(contents) = fs::read_to_string("/sys/class/power_supply/BAT0/capacity") {
+        if let Ok(percentage) = contents.parse::<u8>() {
+            return Some(percentage);
+        }
+    };
+
+    None
 }
 
+#[allow(unused_must_use)]
 fn notify(percentage: u8) {
-    if Command::new("sh")
+    Command::new("sh")
         .arg("-c")
         .arg(format!(
             "notify-send -a \"LowBatteryNotify\" -u CRITICAL -t 5000 -p \"Battery Low ({}%)\"",
             percentage
         ))
-        .output()
-        .is_err()
-    {};
+        .output();
 }
 
 fn main() {
